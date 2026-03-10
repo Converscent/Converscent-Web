@@ -1,0 +1,1775 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Converscent AI — Créateur de Chatbots Intelligents</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #050810;
+      --surface: #0c1220;
+      --card: #101827;
+      --border: rgba(99,202,255,0.12);
+      --accent: #63caff;
+      --accent2: #a259ff;
+      --accent3: #00ffb2;
+      --text: #e8f0fe;
+      --muted: #7a8aaa;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(99,202,255,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(99,202,255,0.025) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .cursor { display: none; }
+    .cursor-ring { display: none; }
+
+    /* TOPBAR */
+    .topbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      background: rgba(5,8,16,0.88);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: stretch;
+      height: 64px;
+      padding: 0 48px;
+    }
+
+    .topbar-logo {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 1.1rem;
+      color: var(--text);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      margin-right: 48px;
+      letter-spacing: -0.02em;
+      
+      border: none;
+      background: none;
+    }
+    .topbar-logo span { color: var(--accent); }
+
+    .tabs {
+      display: flex;
+      align-items: stretch;
+      flex: 1;
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--muted);
+      font-family: 'DM Mono', monospace;
+      font-size: 0.74rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 0 26px;
+      
+      transition: color 0.2s, border-color 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .tab-btn:hover { color: var(--text); }
+    .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .tab-num { font-size: 0.58rem; opacity: 0.4; }
+
+    .topbar-cta {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+    }
+    .btn-nav {
+      background: transparent;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      padding: 9px 22px;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      transition: all 0.2s;
+    }
+    .btn-nav:hover { background: var(--accent); color: var(--bg); }
+
+    /* PAGES */
+    .page {
+      display: none;
+      min-height: 100vh;
+      padding-top: 64px;
+      position: relative;
+      z-index: 1;
+    }
+    .page.active {
+      display: block;
+      animation: pageIn 0.4s ease both;
+    }
+    @keyframes pageIn {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* SHARED */
+    .section-wrap { padding: 80px; max-width: 1400px; margin: 0 auto; }
+
+    .section-label {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 48px;
+    }
+    .section-label::before { content:''; width:36px; height:1px; background:var(--accent); }
+
+    .section-title {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(2.2rem, 4vw, 3.8rem);
+      font-weight: 800;
+      line-height: 1.05;
+      letter-spacing: -0.03em;
+      margin-bottom: 64px;
+    }
+
+    @keyframes fadeUp {
+      from { opacity:0; transform:translateY(20px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+
+    /* FOOTER */
+    footer {
+      position: relative; z-index: 1;
+      border-top: 1px solid var(--border);
+      padding: 28px 80px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .footer-logo {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800; font-size: 1rem;
+      text-decoration: none; color: var(--text); 
+      background: none; border: none;
+    }
+    .footer-logo span { color: var(--accent); }
+    .footer-copy { font-size: 0.68rem; color: var(--muted); letter-spacing: 0.06em; }
+
+    /* ── ACCUEIL ─────────────────────────────── */
+    .hero {
+      min-height: calc(100vh - 64px);
+      display: flex; align-items: center;
+      padding: 80px; position: relative; overflow: hidden;
+    }
+    .orb { position:absolute; border-radius:50%; filter:blur(80px); pointer-events:none; }
+    .orb-1 {
+      width:500px; height:500px;
+      background:radial-gradient(circle,rgba(99,202,255,0.1),transparent);
+      top:-80px; right:-60px;
+      animation:float1 9s ease-in-out infinite;
+    }
+    .orb-2 {
+      width:280px; height:280px;
+      background:radial-gradient(circle,rgba(162,89,255,0.1),transparent);
+      bottom:80px; right:280px;
+      animation:float2 11s ease-in-out infinite;
+    }
+    @keyframes float1{0%,100%{transform:translate(0,0)}50%{transform:translate(-24px,24px)}}
+    @keyframes float2{0%,100%{transform:translate(0,0)}50%{transform:translate(16px,-16px)}}
+
+    .hero-content { max-width: 820px; z-index: 1; }
+
+    .hero-badge {
+      display:inline-flex; align-items:center; gap:8px;
+      border:1px solid var(--border); background:rgba(99,202,255,0.05);
+      padding:8px 16px; font-size:0.7rem; letter-spacing:0.1em;
+      text-transform:uppercase; color:var(--accent); margin-bottom:36px;
+      animation:fadeUp 0.7s ease both;
+    }
+    .badge-dot {
+      width:6px; height:6px; background:var(--accent3); border-radius:50%;
+      animation:pulse 2s infinite;
+    }
+    @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(1.4)}}
+
+    .hero-title {
+      font-family:'Syne',sans-serif;
+      font-size:clamp(3.2rem,8vw,7.5rem);
+      font-weight:800; line-height:0.93;
+      letter-spacing:-0.04em; margin-bottom:28px;
+      animation:fadeUp 0.7s 0.1s ease both;
+    }
+    .hero-title .l2{color:var(--accent);display:block;}
+    .hero-title .l3{display:block;-webkit-text-stroke:1px rgba(99,202,255,0.35);color:transparent;}
+
+    .hero-desc {
+      font-size:0.9rem; line-height:1.85; color:var(--muted);
+      max-width:520px; margin-bottom:44px;
+      animation:fadeUp 0.7s 0.2s ease both;
+    }
+
+    .hero-actions {
+      display:flex; gap:20px; align-items:center;
+      animation:fadeUp 0.7s 0.3s ease both;
+    }
+
+    .btn-primary {
+      background:var(--accent); color:var(--bg);
+      padding:15px 34px; font-family:'DM Mono',monospace;
+      font-size:0.8rem; font-weight:500; letter-spacing:0.07em;
+      text-transform:uppercase; border:none; 
+      transition:background 0.2s;
+    }
+    .btn-primary:hover{background:var(--accent2);color:#fff;}
+
+    .btn-ghost {
+      color:var(--muted); font-family:'DM Mono',monospace;
+      font-size:0.8rem; letter-spacing:0.07em; 
+      display:inline-flex; align-items:center; gap:8px;
+      background:none; border:none; transition:color 0.2s;
+    }
+    .btn-ghost:hover{color:var(--text);}
+    .btn-ghost .arrow{transition:transform 0.2s;}
+    .btn-ghost:hover .arrow{transform:translateX(5px);}
+
+    .hero-stats {
+      display:flex; gap:56px; margin-top:40px;
+      padding-top:24px; border-top:1px solid var(--border);
+      animation:fadeUp 0.7s 0.4s ease both;
+    }
+    .stat-num{font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;color:var(--accent);}
+    .stat-label{font-size:0.68rem;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-top:4px;}
+
+    .tech-strip {
+      border-top:1px solid var(--border);
+      padding:14px 80px;
+      display:flex; align-items:center; gap:48px; overflow:hidden;
+    }
+    .tech-strip-label{font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);white-space:nowrap;flex-shrink:0;}
+    .tech-list{display:flex;gap:40px;animation:scrollTech 18s linear infinite;}
+    .tech-item{font-size:0.78rem;color:rgba(99,202,255,0.35);white-space:nowrap;letter-spacing:0.05em;transition:color 0.2s;}
+    .tech-item:hover{color:var(--accent);}
+    @keyframes scrollTech{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+    .about-strip {
+      border-top:1px solid var(--border);
+      padding:52px 80px 8px;
+      display:grid; grid-template-columns:1fr 1fr;
+      gap:80px; align-items:start;
+    }
+    .about-text .about-intro{font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent);margin-bottom:20px;}
+    .about-heading{font-family:'Syne',sans-serif;font-size:2.2rem;font-weight:800;line-height:1.15;letter-spacing:-0.03em;margin-bottom:22px;}
+    .about-body{font-size:0.85rem;line-height:1.85;color:var(--muted);margin-bottom:16px;}
+    .skills-list{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:28px;}
+    .skill-item{display:flex;align-items:center;gap:8px;font-size:0.75rem;color:var(--muted);}
+    .skill-item::before{content:'▸';color:var(--accent);}
+
+    /* Colonne droite À propos */
+    .about-right { display:flex; flex-direction:column; gap:20px; }
+    .about-stats-grid {
+      display:grid; grid-template-columns:1fr 1fr; gap:2px;
+    }
+    .about-stat {
+      background:var(--card);
+      border:1px solid var(--border);
+      padding:28px 24px;
+      transition: border-color 0.2s;
+    }
+    .about-stat:hover { border-color: rgba(99,202,255,0.3); }
+    .about-stat--accent2 .about-stat-num { color: var(--accent2); }
+    .about-stat--accent3 .about-stat-num { color: var(--accent3); }
+    .about-stat-num {
+      font-family:'Syne',sans-serif;
+      font-size:2.2rem; font-weight:800;
+      color:var(--accent); line-height:1;
+      margin-bottom:6px;
+    }
+    .about-stat-label {
+      font-size:0.65rem; letter-spacing:0.1em;
+      text-transform:uppercase; color:var(--muted);
+    }
+    .about-tools {
+      border:1px solid var(--border);
+      background:var(--card);
+      padding:20px 24px;
+    }
+    .about-tools-label {
+      font-size:0.65rem; letter-spacing:0.1em;
+      text-transform:uppercase; color:var(--muted);
+      margin-bottom:14px;
+    }
+    .about-tools-list { display:flex; flex-wrap:wrap; gap:8px; }
+    .about-tool {
+      border:1px solid var(--border);
+      color:var(--muted);
+      font-family:'DM Mono',monospace;
+      font-size:0.68rem; letter-spacing:0.06em;
+      padding:6px 14px;
+      transition: all 0.2s;
+    }
+    .about-tool:hover { border-color:var(--accent); color:var(--accent); }
+
+    /* ── SERVICES ────────────────────────────── */
+    .services-intro{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:end;margin-bottom:40px;}
+    .services-sub{font-size:0.88rem;line-height:1.8;color:var(--muted);}
+
+    /* Bouton raccourci vers modification */
+    .btn-shortcut {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 10px;
+      padding: 11px 20px;
+      border: 1px dashed rgba(99,202,255,0.35);
+      color: var(--accent);
+      font-family: 'DM Mono', monospace;
+      font-size: 0.72rem;
+      letter-spacing: 0.06em;
+      text-decoration: none;
+      transition: all 0.2s;
+      background: rgba(99,202,255,0.04);
+    }
+    .btn-shortcut:hover {
+      border-color: var(--accent);
+      background: rgba(99,202,255,0.1);
+    }
+
+    .services-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;background:var(--border);}
+    .service-card{
+      background:var(--card);padding:44px 38px;
+      position:relative;overflow:hidden;transition:background 0.25s;
+    }
+    .service-card::before{
+      content:'';position:absolute;top:0;left:0;right:0;height:2px;
+      background:linear-gradient(90deg,var(--accent),var(--accent2));
+      transform:scaleX(0);transform-origin:left;transition:transform 0.35s ease;
+    }
+    .service-card:hover::before{transform:scaleX(1);}
+    .service-card:hover{background:#121d2e;}
+    .service-num{font-size:0.65rem;letter-spacing:0.12em;color:var(--accent);margin-bottom:28px;opacity:0.5;}
+    .service-icon{font-size:2rem;margin-bottom:20px;}
+    .service-name{font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:700;margin-bottom:14px;}
+    .service-desc{font-size:0.81rem;line-height:1.8;color:var(--muted);}
+    .service-tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:24px;}
+    .tag{border:1px solid var(--border);padding:4px 11px;font-size:0.65rem;letter-spacing:0.06em;color:var(--muted);text-transform:uppercase;}
+    .tag--wip{border-color:rgba(255,180,0,0.25);color:rgba(255,180,0,0.6);background:rgba(255,180,0,0.04);text-transform:none;letter-spacing:0;}
+
+    .pricing-strip{
+      margin-top:2px;background:rgba(99,202,255,0.03);
+      border:1px solid var(--border);padding:36px 48px;
+      display:flex;align-items:center;justify-content:space-between;gap:32px;
+    }
+    .pricing-text{font-size:0.85rem;color:var(--muted);line-height:1.7;}
+    .pricing-text strong{color:var(--text);}
+
+    /* Service price badge */
+    .service-price {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 6px 14px;
+      font-size: 0.68rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent3);
+      border: 1px solid rgba(0,255,178,0.25);
+      background: rgba(0,255,178,0.05);
+    }
+
+    /* Pack descriptions côte à côte */
+    .pack-desc-both {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    .pack-desc-box {
+      display: flex;
+      align-items: flex-start;
+      gap: 18px;
+      padding: 24px 28px;
+      border: 1px solid var(--border);
+      background: rgba(99,202,255,0.02);
+    }
+    .pack-desc-box--premium {
+      border-color: rgba(162,89,255,0.3);
+      background: rgba(162,89,255,0.03);
+    }
+    .pack-label-tag {
+      display: inline-block;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      background: rgba(99,202,255,0.12);
+      color: var(--accent);
+      font-weight: 400;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+    .pack-label-tag--premium {
+      background: rgba(162,89,255,0.15);
+      color: var(--accent2);
+    }
+
+    /* Toggle par carte */
+    .card-pack-toggle {
+      display: flex;
+      gap: 2px;
+      margin-top: 18px;
+      margin-bottom: 0;
+      background: rgba(99,202,255,0.06);
+      width: fit-content;
+      padding: 2px;
+    }
+    .card-pack-btn {
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      font-family: 'DM Mono', monospace;
+      font-size: 0.68rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 7px 18px;
+      cursor: pointer;
+      transition: all 0.18s;
+    }
+    .card-pack-btn.active { background: var(--accent); color: var(--bg); }
+    .card-pack-btn:not(.active):hover { color: var(--text); }
+
+    /* Prix premium */
+    .price-plus {
+      font-size: 1.4rem;
+      color: var(--text);
+      margin: 0 6px;
+      font-weight: 600;
+    }
+    .price-note {
+      font-size: 0.65rem;
+      color: rgba(162,89,255,0.7);
+      letter-spacing: 0.04em;
+      margin-top: 6px;
+    }
+
+    /* Bouton devis sur carte */
+    .btn-devis {
+      display: block;
+      width: 100%;
+      margin-top: 20px;
+      padding: 12px;
+      background: transparent;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-family: 'DM Mono', monospace;
+      font-size: 0.75rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+    }
+    .btn-devis:hover { background: var(--accent); color: var(--bg); }
+
+    @media(max-width:900px){
+      .pack-desc-both { grid-template-columns: 1fr; }
+    }
+
+    /* Offer grid */
+    .offer-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 48px;
+    }
+    .offer-card {
+      border: 1px solid var(--border);
+      background: var(--card);
+      overflow: hidden;
+      position: relative;
+      transition: border-color 0.25s, transform 0.25s;
+    }
+    .offer-card:hover { border-color: var(--accent); transform: translateY(-4px); }
+    .offer-card.offer-featured { border-color: rgba(162,89,255,0.4); }
+    .offer-card.offer-featured:hover { border-color: var(--accent2); }
+
+    .offer-badge {
+      position: absolute;
+      top: 14px; right: 14px;
+      background: var(--accent2);
+      color: #fff;
+      font-size: 0.62rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 5px 10px;
+      z-index: 2;
+    }
+
+    .offer-header {
+      padding: 32px 28px 24px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+    }
+    .offer-icon { font-size: 2.4rem; }
+    .offer-num {
+      font-family: 'Syne', sans-serif;
+      font-size: 3rem;
+      font-weight: 800;
+      color: rgba(99,202,255,0.12);
+      line-height: 1;
+    }
+
+    .offer-body { padding: 0 28px 28px; }
+    .offer-name {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    .offer-desc {
+      font-size: 0.8rem;
+      line-height: 1.75;
+      color: var(--muted);
+      margin-bottom: 18px;
+    }
+
+    .offer-pricing { margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border); }
+    .price-block { }
+    .price-block.hidden { display: none; }
+    .price-main {
+      font-family: 'Syne', sans-serif;
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--accent3);
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+    .price-mo {
+      font-size: 1rem;
+      font-weight: 400;
+      color: var(--muted);
+    }
+    .price-sub {
+      font-size: 0.68rem;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+      line-height: 1.5;
+    }
+
+    /* Modification section */
+    .modif-section {
+      margin-top: 48px;
+      padding: 40px;
+      border: 1px solid rgba(99,202,255,0.2);
+      background: rgba(99,202,255,0.02);
+    }
+    .modif-header { margin-bottom: 36px; }
+    .modif-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.6rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 10px;
+    }
+    .modif-desc {
+      font-size: 0.84rem;
+      line-height: 1.75;
+      color: var(--muted);
+      max-width: 600px;
+    }
+    .modif-form { display: flex; flex-direction: column; gap: 14px; max-width: 680px; }
+
+    @media(max-width:900px){
+      .offer-grid { grid-template-columns: 1fr; }
+      .modif-section { padding: 28px 20px; }
+    }
+
+    /* Process section */
+    .process-section {
+      margin-top: 48px;
+      padding-top: 40px;
+      border-top: 1px solid var(--border);
+    }
+    .process-steps {
+      display: flex;
+      align-items: flex-start;
+      gap: 0;
+    }
+    .process-step {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .process-connector {
+      width: 60px;
+      height: 1px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      margin-top: 28px;
+      flex-shrink: 0;
+      opacity: 0.4;
+    }
+    .step-num {
+      font-family: 'Syne', sans-serif;
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: var(--accent);
+      opacity: 0.3;
+      line-height: 1;
+    }
+    .step-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+      color: var(--text);
+    }
+    .step-desc {
+      font-size: 0.78rem;
+      line-height: 1.75;
+      color: var(--muted);
+    }
+    @media(max-width:900px){
+      .process-steps { flex-direction: column; gap: 32px; }
+      .process-connector { width: 1px; height: 32px; margin: 0 0 0 28px; background: linear-gradient(180deg, var(--accent), var(--accent2)); }
+    }
+
+    /* ── PORTFOLIO ───────────────────────────── */
+    .portfolio-filter{display:flex;gap:12px;margin-bottom:48px;flex-wrap:wrap;}
+    .filter-btn{
+      background:transparent;border:1px solid var(--border);color:var(--muted);
+      padding:8px 20px;font-family:'DM Mono',monospace;font-size:0.7rem;
+      letter-spacing:0.08em;text-transform:uppercase;transition:all 0.2s;
+    }
+    .filter-btn:hover,.filter-btn.active{border-color:var(--accent);color:var(--accent);background:rgba(99,202,255,0.05);}
+
+    .portfolio-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:24px;}
+    .portfolio-card{
+      border:1px solid var(--border);overflow:hidden;
+      transition:border-color 0.25s,transform 0.25s;
+    }
+    .portfolio-card:hover{border-color:var(--accent);transform:translateY(-4px);}
+    .portfolio-card.featured{grid-column:span 2;}
+
+    .portfolio-visual{
+      height:240px;display:flex;align-items:center;
+      justify-content:center;position:relative;overflow:hidden;
+    }
+    .portfolio-card.featured .portfolio-visual{height:320px;}
+    .pv-icon{
+      width:100px;height:100px;border:1px solid rgba(99,202,255,0.18);
+      display:flex;align-items:center;justify-content:center;
+      font-size:2.8rem;position:relative;
+    }
+    .pv-icon::before{content:'';position:absolute;inset:-18px;border:1px solid rgba(99,202,255,0.06);}
+    .pv-icon::after{content:'';position:absolute;inset:-36px;border:1px solid rgba(99,202,255,0.03);}
+    .portfolio-scan{
+      position:absolute;left:0;right:0;height:2px;
+      background:linear-gradient(90deg,transparent,var(--accent),transparent);
+      top:-2px;opacity:0;transition:opacity 0.3s;animation:scan 2.5s linear infinite;
+    }
+    .portfolio-card:hover .portfolio-scan{opacity:0.5;}
+    @keyframes scan{from{top:-2px}to{top:100%}}
+
+    .portfolio-info{padding:28px 32px;}
+    .p-category{font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);margin-bottom:10px;}
+    .p-name{font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:700;margin-bottom:10px;}
+    .p-desc{font-size:0.8rem;line-height:1.7;color:var(--muted);}
+    .p-results{display:flex;gap:28px;margin-top:20px;padding-top:20px;border-top:1px solid var(--border);}
+    .p-result-num{font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:800;color:var(--accent3);}
+    .p-result-label{font-size:0.65rem;color:var(--muted);letter-spacing:0.06em;text-transform:uppercase;margin-top:2px;}
+
+    /* ── PORTFOLIO NOUVEAU ───────────────────── */
+    .early-banner {
+      display: grid;
+      grid-template-columns: 1fr 280px;
+      gap: 60px;
+      align-items: center;
+      border: 1px solid rgba(99,202,255,0.2);
+      background: rgba(99,202,255,0.02);
+      padding: 52px;
+      margin-bottom: 80px;
+    }
+    .early-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid rgba(0,255,178,0.3);
+      background: rgba(0,255,178,0.05);
+      color: var(--accent3);
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 7px 14px;
+      margin-bottom: 20px;
+    }
+    .early-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 2rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin-bottom: 16px;
+    }
+    .early-desc {
+      font-size: 0.84rem;
+      line-height: 1.8;
+      color: var(--muted);
+      margin-bottom: 28px;
+    }
+    .early-desc strong { color: var(--text); }
+    .early-perks { display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; }
+    .early-perk { display: flex; align-items: center; gap: 12px; font-size: 0.82rem; color: var(--muted); }
+    .perk-icon { font-size: 1rem; flex-shrink: 0; }
+    .early-spots { display: flex; gap: 10px; }
+    .spot {
+      padding: 8px 20px;
+      border: 1px solid var(--border);
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .spot.taken {
+      border-color: var(--accent3);
+      color: var(--accent3);
+      background: rgba(0,255,178,0.06);
+    }
+    .early-visual {
+      aspect-ratio: 1;
+      border: 1px solid var(--border);
+      background: var(--card);
+      display: flex; align-items: center; justify-content: center;
+      position: relative;
+    }
+    .early-visual-inner { text-align: center; }
+    .ev-num {
+      font-family: 'Syne', sans-serif;
+      font-size: 5rem;
+      font-weight: 800;
+      color: var(--accent);
+      line-height: 1;
+    }
+    .ev-label {
+      font-size: 0.75rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    /* Demo chatbot */
+    .demo-section { margin-bottom: 80px; }
+    .demo-header { margin-bottom: 32px; }
+    .demo-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.6rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 10px;
+    }
+    .demo-desc { font-size: 0.83rem; line-height: 1.75; color: var(--muted); max-width: 640px; }
+
+    .demo-window {
+      border: 1px solid var(--border);
+      background: var(--card);
+      max-width: 680px;
+    }
+    .demo-topbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 18px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .demo-dot { width: 12px; height: 12px; border-radius: 50%; }
+    .demo-title-bar { flex: 1; text-align: center; font-size: 0.72rem; letter-spacing: 0.08em; color: var(--muted); }
+    .demo-status { display: flex; align-items: center; gap: 6px; font-size: 0.68rem; color: var(--accent3); }
+
+    .demo-chat {
+      padding: 24px;
+      min-height: 260px;
+      max-height: 360px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .demo-msg { display: flex; gap: 12px; align-items: flex-start; }
+    .demo-msg.user { flex-direction: row-reverse; }
+    .demo-avatar { font-size: 1.4rem; flex-shrink: 0; }
+    .demo-bubble {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 12px 16px;
+      font-size: 0.82rem;
+      line-height: 1.7;
+      max-width: 80%;
+    }
+    .demo-msg.user .demo-bubble {
+      background: rgba(99,202,255,0.08);
+      border-color: rgba(99,202,255,0.2);
+    }
+    .demo-suggestions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; padding-left: 48px; }
+    .demo-suggest {
+      background: transparent;
+      border: 1px solid rgba(99,202,255,0.25);
+      color: var(--accent);
+      font-family: 'DM Mono', monospace;
+      font-size: 0.7rem;
+      padding: 7px 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 0.04em;
+    }
+    .demo-suggest:hover { background: rgba(99,202,255,0.08); border-color: var(--accent); }
+
+    .demo-input-wrap {
+      display: flex;
+      border-top: 1px solid var(--border);
+    }
+    .demo-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      font-size: 0.82rem;
+      padding: 14px 18px;
+      outline: none;
+    }
+    .demo-send {
+      background: var(--accent);
+      border: none;
+      color: var(--bg);
+      padding: 0 24px;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .demo-send:hover { background: var(--accent2); }
+    .demo-notice {
+      border-top: 1px solid var(--border);
+      padding: 8px 18px;
+      font-size: 0.65rem;
+      color: rgba(255,180,0,0.5);
+      letter-spacing: 0.04em;
+    }
+
+    /* Slots futurs */
+    .slots-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
+    .slot-card { border: 1px dashed rgba(99,202,255,0.15); overflow: hidden; }
+    .slot-visual {
+      height: 160px;
+      background: linear-gradient(135deg, #0a0f1a, #0d1525);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 10px;
+    }
+    .slot-icon { font-size: 2rem; opacity: 0.3; }
+    .slot-label { font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); opacity: 0.5; }
+    .slot-info { padding: 20px 24px; }
+    .slot-status {
+      font-size: 0.65rem; letter-spacing: 0.12em; text-transform: uppercase;
+      color: rgba(255,180,0,0.5); margin-bottom: 8px;
+    }
+    .slot-desc { font-size: 0.78rem; line-height: 1.65; color: var(--muted); opacity: 0.6; }
+
+    @media(max-width:900px){
+      .early-banner { grid-template-columns:1fr; padding:28px; gap:32px; }
+      .early-banner-right { display:none; }
+      .slots-grid { grid-template-columns:1fr; }
+    }
+    /* ── POURQUOI UN CHATBOT ─────────────────── */
+    .why-section {
+      padding: 32px 0 80px;
+      border-top: 1px solid var(--border);
+    }
+    .why-title {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(1.8rem, 3.5vw, 3rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin-bottom: 60px;
+    }
+    .why-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 2px;
+    }
+    .why-card {
+      display: flex;
+      gap: 24px;
+      align-items: flex-start;
+      padding: 36px 40px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .why-card:hover {
+      border-color: rgba(99,202,255,0.3);
+      background: rgba(99,202,255,0.03);
+    }
+    .why-icon { font-size: 2rem; flex-shrink: 0; margin-top: 2px; }
+    .why-name { font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 700; margin-bottom: 10px; letter-spacing: -0.01em; }
+    .why-desc { font-size: 0.82rem; line-height: 1.75; color: var(--muted); }
+    @media(max-width:900px){ .why-grid { grid-template-columns: 1fr; } }
+
+    /* ── CONTACT ─────────────────────────────── */
+    .contact-grid{display:grid;grid-template-columns:1fr 1.1fr;gap:80px;align-items:start;}
+    .contact-heading{font-family:'Syne',sans-serif;font-size:clamp(2.4rem,4.5vw,4.2rem);font-weight:800;line-height:1.05;letter-spacing:-0.04em;margin-bottom:24px;}
+    .contact-heading span{color:var(--accent);}
+    .contact-body{font-size:0.86rem;line-height:1.85;color:var(--muted);margin-bottom:40px;}
+    .contact-links{display:flex;flex-direction:column;gap:12px;}
+    .contact-link{
+      display:flex;align-items:center;gap:16px;padding:16px 22px;
+      border:1px solid var(--border);color:var(--text);text-decoration:none;
+      transition:all 0.22s;font-size:0.82rem;
+    }
+    .contact-link:hover{border-color:var(--accent);background:rgba(99,202,255,0.04);padding-left:30px;}
+    .contact-link .ci{font-size:1.1rem;}
+    .contact-link .ct{flex:1;}
+    .contact-link .ca{color:var(--accent);opacity:0;transition:opacity 0.2s;}
+    .contact-link:hover .ca{opacity:1;}
+
+    /* Boutons choix formulaire */
+    .choice-group { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+    .choice-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-family: 'DM Mono', monospace;
+      font-size: 0.72rem;
+      letter-spacing: 0.05em;
+      padding: 10px 16px;
+      cursor: pointer;
+      transition: all 0.18s;
+    }
+    .choice-btn:hover { border-color: var(--accent); color: var(--text); }
+    .choice-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(99,202,255,0.07); }
+
+    /* Validation email */
+    .email-error {
+      font-size: 0.65rem;
+      color: #ff6b6b;
+      letter-spacing: 0.05em;
+      margin-top: 2px;
+      display: block;
+      min-height: 0;
+    }
+    .form-group input.invalid { border-color: #ff6b6b; }
+    .form-group input.valid { border-color: var(--accent3); }
+
+    /* Récap prix */
+    .price-recap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      background: rgba(0,255,178,0.04);
+      border: 1px solid rgba(0,255,178,0.2);
+      margin-top: 4px;
+    }
+    .price-recap-label { font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+    .price-recap-value { font-family: 'Syne', sans-serif; font-size: 1.3rem; font-weight: 800; color: var(--accent3); }
+    .price-recap-sub { font-size: 0.68rem; color: var(--muted); }
+
+    .contact-form{display:flex;flex-direction:column;gap:14px;}
+    .form-group{display:flex;flex-direction:column;gap:7px;}
+    .form-group label{font-size:0.67rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);}
+    .form-group input,.form-group textarea,.form-group select{
+      background:var(--card);border:1px solid var(--border);color:var(--text);
+      padding:13px 16px;font-family:'DM Mono',monospace;font-size:0.83rem;
+      outline:none;transition:border-color 0.2s;resize:none;
+    }
+    .form-group input:focus,.form-group textarea:focus,.form-group select:focus{border-color:var(--accent);}
+    .form-group select option{background:var(--card);}
+    .form-group textarea{height:110px;}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+    .btn-submit{
+      background:var(--accent);color:var(--bg);padding:16px;
+      font-family:'DM Mono',monospace;font-size:0.8rem;font-weight:500;
+      letter-spacing:0.1em;text-transform:uppercase;border:none;
+      margin-top:6px;transition:background 0.2s;
+    }
+    .btn-submit:hover{background:var(--accent2);color:#fff;}
+
+    /* RESPONSIVE */
+    @media(max-width:900px){
+      .topbar{padding:0 16px;}
+      .tab-btn{padding:0 12px;font-size:0.62rem;}
+      .tab-num{display:none;}
+      .topbar-cta{display:none;}
+      .hero,.tech-strip,.about-strip,.section-wrap,footer{padding-left:20px;padding-right:20px;}
+      .services-intro,.about-strip,.contact-grid{grid-template-columns:1fr;gap:40px;}
+      .services-grid{grid-template-columns:1fr;}
+      .portfolio-grid{grid-template-columns:1fr;}
+      .portfolio-card.featured{grid-column:span 1;}
+      .hero-stats{gap:24px;flex-wrap:wrap;}
+      .form-row{grid-template-columns:1fr;}
+      footer{flex-direction:column;gap:12px;text-align:center;}
+    }
+  </style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- TOPBAR -->
+<header class="topbar">
+  <button class="topbar-logo" onclick="showPage('accueil')">Convers<span>cent</span></button>
+
+  <nav class="tabs">
+    <button class="tab-btn active" data-page="accueil" onclick="showPage('accueil')">
+      <span class="tab-num">01</span> Accueil
+    </button>
+    <button class="tab-btn" data-page="services" onclick="showPage('services')">
+      <span class="tab-num">02</span> Services
+    </button>
+    <button class="tab-btn" data-page="portfolio" onclick="showPage('portfolio')">
+      <span class="tab-num">03</span> Portfolio
+    </button>
+    <button class="tab-btn" data-page="contact" onclick="showPage('contact')">
+      <span class="tab-num">04</span> Contact
+    </button>
+  </nav>
+
+  <div class="topbar-cta">
+    <button class="btn-nav" onclick="showPage('contact')">Démarrer un projet</button>
+  </div>
+</header>
+
+<!-- PAGE: ACCUEIL -->
+<div class="page active" id="page-accueil">
+  <div class="hero">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="hero-content">
+      <div class="hero-badge"><span class="badge-dot"></span>Disponible pour de nouveaux projets</div>
+      <h1 class="hero-title">
+        Chatbots
+        <span class="l2">Intelligents</span>
+        <span class="l3">sur mesure.</span>
+      </h1>
+      <p class="hero-desc">Je conçois et déploie des assistants virtuels dopés à l'IA pour automatiser vos interactions clients, qualifier vos leads et booster votre efficacité opérationnelle — 24h/24, 7j/7.</p>
+      <div class="hero-actions">
+        <button class="btn-primary" onclick="showPage('contact')">Lancer votre projet →</button>
+        <button class="btn-ghost" onclick="showPage('portfolio')">Voir mes réalisations <span class="arrow">→</span></button>
+      </div>
+      <div class="hero-stats">
+        <div><div class="stat-num">100%</div><div class="stat-label">Sur mesure</div></div>
+        <div><div class="stat-num">Agent</div><div class="stat-label">Optimisé par IA</div></div>
+        <div><div class="stat-num">Déployé</div><div class="stat-label">Sur votre site web</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tech-strip">
+    <span class="tech-strip-label">Spécialités</span>
+    <div class="tech-list">
+      <span class="tech-item">Service Client</span><span class="tech-item">Chatbot FAQ</span>
+      <span class="tech-item">Prise de RDV</span><span class="tech-item">Botpress</span>
+      <span class="tech-item">Intégration Site Web</span><span class="tech-item">Réponse Automatique</span>
+      <span class="tech-item">Conversation IA</span><span class="tech-item">Expérience Client</span>
+      <span class="tech-item">Service Client</span><span class="tech-item">Chatbot FAQ</span>
+      <span class="tech-item">Prise de RDV</span><span class="tech-item">Botpress</span>
+      <span class="tech-item">Intégration Site Web</span><span class="tech-item">Réponse Automatique</span>
+      <span class="tech-item">Conversation IA</span><span class="tech-item">Expérience Client</span>
+    </div>
+  </div>
+
+  <div class="about-strip">
+    <div class="about-text">
+      <div class="about-intro">À propos</div>
+      <h2 class="about-heading">Passionné d'IA &amp;<br>de conversation design.</h2>
+      <p class="about-body">Je crée des chatbots uniques, entièrement adaptés aux besoins de chaque client. Mon objectif : livrer un résultat optimal tout en maîtrisant les coûts liés aux APIs d'IA — pas de superflu, chaque appel compte.</p>
+      <p class="about-body">Chaque assistant est pensé sur mesure : je modélise vos flux de conversation, optimise chaque prompt et intègre le tout directement sur votre site web, sans friction.</p>
+      <div class="skills-list">
+        <div class="skill-item">Conception des flux conversationnels</div>
+        <div class="skill-item">Prompt Engineering</div>
+        <div class="skill-item">Intégration sur site web</div>
+        <div class="skill-item">Optimisation des coûts API</div>
+        <div class="skill-item">Chatbot sur mesure</div>
+        <div class="skill-item">Expérience client optimisée</div>
+      </div>
+    </div>
+    <div class="about-right">
+      <div class="about-tools">
+        <div class="about-tools-label">Outils &amp; méthodes</div>
+        <div class="about-tools-list">
+          <span class="about-tool">Botpress</span>
+          <span class="about-tool">Prompt Engineering</span>
+          <span class="about-tool">Flux conversationnels</span>
+          <span class="about-tool">Intégration web</span>
+          <span class="about-tool">Optimisation API</span>
+        </div>
+      </div>
+      <div class="about-cta-strip">
+        <button class="btn-primary" onclick="showPage('contact')" style="width:100%">Démarrer votre projet →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- POURQUOI UN CHATBOT -->
+  <div class="why-section">
+    <div class="section-wrap" style="padding-top:32px;">
+      <div class="section-label">Pourquoi un chatbot ?</div>
+      <h2 class="why-title">Ce qu'un chatbot change<br>pour votre activité.</h2>
+      <div class="why-grid">
+        <div class="why-card">
+          <div class="why-icon">🌙</div>
+          <div class="why-content">
+            <div class="why-name">Répond aux clients 24h/24</div>
+            <p class="why-desc">Votre chatbot ne dort jamais. Il répond instantanément à vos clients, même le week-end et en pleine nuit — sans intervention de votre part.</p>
+          </div>
+        </div>
+        <div class="why-card">
+          <div class="why-icon">📵</div>
+          <div class="why-content">
+            <div class="why-name">Réduit les appels inutiles</div>
+            <p class="why-desc">Les questions récurrentes sont traitées automatiquement. Vos équipes se concentrent sur les vraies priorités, pas sur les demandes répétitives.</p>
+          </div>
+        </div>
+        <div class="why-card">
+          <div class="why-icon">🎯</div>
+          <div class="why-content">
+            <div class="why-name">Capture les prospects automatiquement</div>
+            <p class="why-desc">Chaque visiteur est un client potentiel. Le chatbot engage la conversation, qualifie le besoin et collecte les informations clés sans que vous leviez le petit doigt.</p>
+          </div>
+        </div>
+        <div class="why-card">
+          <div class="why-icon">⭐</div>
+          <div class="why-content">
+            <div class="why-name">Améliore l'expérience client</div>
+            <p class="why-desc">Une réponse immédiate, un ton adapté à votre image, une navigation fluide — vos clients repartent satisfaits et se souviennent de votre marque.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <button class="footer-logo" onclick="showPage('accueil')">Convers<span>cent</span></button>
+    <span class="footer-copy">© 2025 — Tous droits réservés</span>
+  </footer>
+</div>
+<div class="page" id="page-services">
+  <div class="section-wrap">
+
+    <div class="section-label">Services</div>
+    <div class="services-intro">
+      <h2 class="section-title" style="margin-bottom:0">Des chatbots taillés<br>pour votre activité.</h2>
+      <div>
+        <p class="services-sub">Je ne propose pas de solutions génériques. Chaque chatbot est conçu spécifiquement pour votre métier, vos clients et vos objectifs — avec un coût API maîtrisé et un résultat optimal.</p>
+        <a href="#modif-section" class="btn-shortcut" onclick="document.getElementById('modif-section').scrollIntoView({behavior:'smooth'});return false;">
+          🔧 Déjà client Pack Starter ? Demander une modification ↓
+        </a>
+      </div>
+    </div>
+
+    <!-- PACK DESCRIPTIONS — toujours visibles côte à côte -->
+    <div class="pack-desc-both">
+      <div class="pack-desc-box">
+        <div class="pack-desc-icon">🚀</div>
+        <div>
+          <div class="pack-desc-title">Pack Starter <span class="pack-label-tag">Paiement unique</span></div>
+          <p class="pack-desc-text">Je crée votre chatbot sur mesure avec <strong>6 mois de maintenance technique incluse</strong>. Les coûts liés aux APIs d'IA sont à votre charge directement. Les modifications après livraison sont facturées séparément.</p>
+        </div>
+      </div>
+      <div class="pack-desc-box pack-desc-box--premium">
+        <div class="pack-desc-icon">⭐</div>
+        <div>
+          <div class="pack-desc-title">Pack Premium <span class="pack-label-tag pack-label-tag--premium">Starter + abonnement</span></div>
+          <p class="pack-desc-text">Le Pack Premium inclut le <strong>coût de création identique au Pack Starter</strong>, auquel s'ajoute un abonnement mensuel couvrant la maintenance et les modifications. Je gère vos clés API — les coûts d'usage restent à votre charge, sans aucune configuration de votre côté.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- CHATBOT CARDS -->
+    <div class="offer-grid">
+
+      <!-- FAQ -->
+      <div class="offer-card">
+        <div class="offer-header" style="background:linear-gradient(135deg,#0a1628,#0d2040)">
+          <div class="offer-icon">💬</div>
+          <div class="offer-num">01</div>
+        </div>
+        <div class="offer-body">
+          <div class="offer-name">Chatbot FAQ</div>
+          <p class="offer-desc">Votre assistant répond automatiquement aux questions fréquentes de vos clients, à toute heure, sans intervention humaine. Réponses personnalisées selon votre activité.</p>
+          <div class="offer-tags">
+            <span class="tag">Réponses optimisées</span>
+            <span class="tag">Orientation client</span>
+            <span class="tag">Adaptation client</span>
+          </div>
+          <!-- Toggle par carte -->
+          <div class="card-pack-toggle">
+            <button class="card-pack-btn active" onclick="switchCardPack('faq', 'starter', this)">Starter</button>
+            <button class="card-pack-btn" onclick="switchCardPack('faq', 'premium', this)">Premium</button>
+          </div>
+          <div class="offer-pricing">
+            <div class="price-block" id="price-faq-starter">
+              <div class="price-main">199 €</div>
+              <div class="price-sub">paiement unique · devis sur demande spécifique</div>
+            </div>
+            <div class="price-block hidden" id="price-faq-premium">
+              <div class="price-main">199 € <span class="price-plus">+</span> 39 €<span class="price-mo">/mois</span></div>
+              <div class="price-sub">création + abonnement mensuel · maintenance &amp; modifications incluses</div>
+              <div class="price-note">⚠ Les coûts d'usage API restent à votre charge</div>
+            </div>
+          </div>
+          <button class="btn-devis" onclick="demanderDevis('faq', document.querySelector('#price-faq-premium').classList.contains('hidden') ? 'starter' : 'premium')">Demander un devis →</button>
+        </div>
+      </div>
+
+      <!-- RÉSERVATION -->
+      <div class="offer-card">
+        <div class="offer-header" style="background:linear-gradient(135deg,#0d1a10,#102518)">
+          <div class="offer-icon">📅</div>
+          <div class="offer-num">02</div>
+        </div>
+        <div class="offer-body">
+          <div class="offer-name">Chatbot Réservation</div>
+          <p class="offer-desc">Vos clients réservent un créneau directement via le chatbot. Il qualifie la demande, propose les disponibilités et confirme automatiquement, sans aller-retour par email.</p>
+          <div class="offer-tags">
+            <span class="tag">Réservation automatisée</span>
+            <span class="tag tag--wip">🚧 En travaux</span>
+            <span class="tag tag--wip">🚧 En travaux</span>
+          </div>
+          <div class="card-pack-toggle">
+            <button class="card-pack-btn active" onclick="switchCardPack('rdv', 'starter', this)">Starter</button>
+            <button class="card-pack-btn" onclick="switchCardPack('rdv', 'premium', this)">Premium</button>
+          </div>
+          <div class="offer-pricing">
+            <div class="price-block" id="price-rdv-starter">
+              <div class="price-main">399 €</div>
+              <div class="price-sub">paiement unique · devis sur demande spécifique</div>
+            </div>
+            <div class="price-block hidden" id="price-rdv-premium">
+              <div class="price-main">399 € <span class="price-plus">+</span> 59 €<span class="price-mo">/mois</span></div>
+              <div class="price-sub">création + abonnement mensuel · maintenance &amp; modifications incluses</div>
+              <div class="price-note">⚠ Les coûts d'usage API restent à votre charge</div>
+            </div>
+          </div>
+          <button class="btn-devis" onclick="demanderDevis('rdv', document.querySelector('#price-rdv-premium').classList.contains('hidden') ? 'starter' : 'premium')">Demander un devis →</button>
+        </div>
+      </div>
+
+      <!-- COMBINÉ -->
+      <div class="offer-card offer-featured">
+        <div class="offer-header" style="background:linear-gradient(135deg,#120d20,#1e1030)">
+          <div class="offer-icon">🤖</div>
+          <div class="offer-num">03</div>
+        </div>
+        <div class="offer-body">
+          <div class="offer-name">Chatbot Réservation + FAQ</div>
+          <p class="offer-desc">Un seul assistant qui répond aux questions ET gère les réservations. La solution tout-en-un pour automatiser l'ensemble de votre relation client, avec coût API optimisé.</p>
+          <div class="offer-tags">
+            <span class="tag">Solution complète</span>
+            <span class="tag">Automatisation des ventes</span>
+            <span class="tag">Réservation immédiate</span>
+          </div>
+          <div class="card-pack-toggle">
+            <button class="card-pack-btn active" onclick="switchCardPack('combo', 'starter', this)">Starter</button>
+            <button class="card-pack-btn" onclick="switchCardPack('combo', 'premium', this)">Premium</button>
+          </div>
+          <div class="offer-pricing">
+            <div class="price-block" id="price-combo-starter">
+              <div class="price-main">549 €</div>
+              <div class="price-sub">paiement unique · devis sur demande spécifique</div>
+            </div>
+            <div class="price-block hidden" id="price-combo-premium">
+              <div class="price-main">549 € <span class="price-plus">+</span> 79 €<span class="price-mo">/mois</span></div>
+              <div class="price-sub">création + abonnement mensuel · maintenance &amp; modifications incluses</div>
+              <div class="price-note">⚠ Les coûts d'usage API restent à votre charge</div>
+            </div>
+          </div>
+          <button class="btn-devis" onclick="demanderDevis('combo', document.querySelector('#price-combo-premium').classList.contains('hidden') ? 'starter' : 'premium')">Demander un devis →</button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- PROCESSUS -->
+    <div class="process-section">
+      <div class="section-label" style="margin-bottom:40px;">Comment ça marche</div>
+      <div class="process-steps">
+        <div class="process-step">
+          <div class="step-num">01</div>
+          <div class="step-content">
+            <div class="step-title">Analyse de vos besoins</div>
+            <p class="step-desc">On échange sur votre activité, vos clients et vos objectifs. Je définis avec vous le périmètre exact du chatbot.</p>
+          </div>
+        </div>
+        <div class="process-connector"></div>
+        <div class="process-step">
+          <div class="step-num">02</div>
+          <div class="step-content">
+            <div class="step-title">Conception des flux</div>
+            <p class="step-desc">Je modélise toutes les conversations : questions, réponses, cas particuliers. Chaque scénario est pensé pour l'utilisateur final.</p>
+          </div>
+        </div>
+        <div class="process-connector"></div>
+        <div class="process-step">
+          <div class="step-num">03</div>
+          <div class="step-content">
+            <div class="step-title">Développement &amp; optimisation</div>
+            <p class="step-desc">Je construis le chatbot, optimise les prompts pour limiter les coûts API et teste chaque scénario jusqu'au résultat optimal.</p>
+          </div>
+        </div>
+        <div class="process-connector"></div>
+        <div class="process-step">
+          <div class="step-num">04</div>
+          <div class="step-content">
+            <div class="step-title">Intégration &amp; livraison</div>
+            <p class="step-desc">Le chatbot est intégré sur votre site. Je vous accompagne à la prise en main et reste disponible pour la suite.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DEMANDE DE MODIFICATION (Starter) -->
+    <div class="modif-section" id="modif-section">
+      <div class="modif-header">
+        <div>
+          <div class="section-label" style="margin-bottom:12px;">Pack Starter</div>
+          <h3 class="modif-title">Demander une modification</h3>
+          <p class="modif-desc">Vous avez souscrit au Pack Starter et souhaitez faire évoluer votre chatbot ? Décrivez votre besoin ci-dessous et je vous envoie un devis sous 48h.</p>
+        </div>
+      </div>
+      <form class="modif-form" onsubmit="handleModif(event)">
+        <div class="form-row">
+          <div class="form-group"><label>Nom d'entreprise</label><input type="text" name="entreprise" placeholder="Mon Entreprise" required /></div>
+          <div class="form-group"><label>Email</label><input type="email" name="email" placeholder="jean@exemple.fr" required /></div>
+        </div>
+        <div class="form-group">
+          <label>Type de chatbot concerné</label>
+          <select name="chatbot">
+            <option>Chatbot FAQ</option>
+            <option>Chatbot Réservation</option>
+            <option>Chatbot Réservation + FAQ</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Décrivez la modification souhaitée</label>
+          <textarea name="modification" placeholder="Ex : Ajouter une nouvelle catégorie de questions, modifier le flux de réservation, changer le ton du bot..."></textarea>
+        </div>
+        <button type="submit" class="btn-submit">Envoyer la demande →</button>
+      </form>
+    </div>
+
+    <!-- CTA FINAL -->
+    <div class="pricing-strip">
+      <p class="pricing-text"><strong>Prêt à automatiser votre relation client ?</strong><br>Premier échange offert et sans engagement — on définit ensemble le projet qui vous correspond.</p>
+      <button class="btn-primary" onclick="showPage('contact')" style="white-space:nowrap">Nous contacter →</button>
+    </div>
+
+  </div>
+  <footer>
+    <button class="footer-logo" onclick="showPage('accueil')">Convers<span>cent</span></button>
+    <span class="footer-copy">© 2025 — Tous droits réservés</span>
+  </footer>
+</div>
+
+<!-- PAGE: PORTFOLIO -->
+<div class="page" id="page-portfolio">
+  <div class="section-wrap">
+
+    <div class="section-label">Portfolio</div>
+    <h2 class="section-title">Premiers clients<br>&amp; démo live.</h2>
+
+    <!-- OFFRE PREMIERS CLIENTS -->
+    <div class="early-banner">
+      <div class="early-banner-left">
+        <div class="early-badge">🎯 Offre de lancement — 3 places disponibles</div>
+        <h3 class="early-title">Je cherche mes 3 premiers clients.</h3>
+        <p class="early-desc">Pour constituer mon portfolio et prouver la qualité de mon travail, je propose mes services à <strong>tarif réduit</strong> à mes trois premiers clients. En échange, j'utiliserai votre projet comme référence (avec votre accord) pour présenter mes réalisations à de futurs clients.</p>
+        <div class="early-perks">
+          <div class="early-perk"><span class="perk-icon">💸</span><span>Prix réduit sur l'un de mes 3 chatbots</span></div>
+          <div class="early-perk"><span class="perk-icon">⚡</span><span>Priorité absolue sur la livraison</span></div>
+          <div class="early-perk"><span class="perk-icon">🤝</span><span>Suivi personnalisé tout au long du projet</span></div>
+          <div class="early-perk"><span class="perk-icon">📸</span><span>Votre projet visible ici dès la livraison</span></div>
+        </div>
+        <div class="early-spots">
+          <div class="spot taken">✓ Place 1</div>
+          <div class="spot">Place 2</div>
+          <div class="spot">Place 3</div>
+        </div>
+        <button class="btn-primary" onclick="showPage('contact')" style="margin-top:32px;">Je veux une place →</button>
+      </div>
+      <div class="early-banner-right">
+        <div class="early-visual">
+          <div class="corner c-tl"></div><div class="corner c-tr"></div>
+          <div class="corner c-bl"></div><div class="corner c-br"></div>
+          <div class="early-visual-inner">
+            <div class="ev-num">3</div>
+            <div class="ev-label">places<br>disponibles</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DEMO CHATBOT -->
+    <div class="demo-section">
+      <div class="section-label" style="margin-bottom:16px;">Démo en direct</div>
+      <div class="demo-header">
+        <h3 class="demo-title">Mon propre chatbot — exemple concret</h3>
+        <p class="demo-desc">Vous pouvez interagir ci-dessous avec le chatbot que j'ai créé pour mon propre site. Il répond aux questions sur mes services, mes tarifs et peut vous orienter vers le bon pack. C'est exactement ce que je construirai pour vous.</p>
+      </div>
+
+      <div class="demo-window">
+        <div class="demo-topbar">
+          <div class="demo-dot" style="background:#ff5f57"></div>
+          <div class="demo-dot" style="background:#febc2e"></div>
+          <div class="demo-dot" style="background:#28c840"></div>
+          <span class="demo-title-bar">Converscent — Assistant</span>
+          <div class="demo-status"><span class="badge-dot" style="width:6px;height:6px;background:var(--accent3);border-radius:50%;display:inline-block;animation:pulse 2s infinite;"></span> En ligne</div>
+        </div>
+        <div class="demo-chat" id="demoChat">
+          <div class="demo-msg bot">
+            <div class="demo-avatar">🤖</div>
+            <div class="demo-bubble">Bonjour ! Je suis l'assistant de <strong>Converscent</strong>. Je peux répondre à vos questions sur nos services, nos tarifs ou vous aider à choisir le chatbot adapté à votre activité. Comment puis-je vous aider ?</div>
+          </div>
+          <div class="demo-suggestions">
+            <button class="demo-suggest" onclick="sendSuggest(this)">Quels sont vos tarifs ?</button>
+            <button class="demo-suggest" onclick="sendSuggest(this)">Quelle différence entre Starter et Premium ?</button>
+            <button class="demo-suggest" onclick="sendSuggest(this)">Quel chatbot me convient ?</button>
+          </div>
+        </div>
+        <div class="demo-input-wrap">
+          <input class="demo-input" id="demoInput" type="text" placeholder="Posez votre question..." onkeydown="if(event.key==='Enter')sendDemo()" />
+          <button class="demo-send" onclick="sendDemo()">→</button>
+        </div>
+        <div class="demo-notice">⚠ Ceci est une démonstration — les réponses sont prédéfinies.</div>
+      </div>
+    </div>
+
+    <!-- SLOTS FUTURS -->
+    <div class="slots-section">
+      <div class="section-label" style="margin-bottom:32px;">Prochaines réalisations</div>
+      <div class="slots-grid">
+        <div class="slot-card">
+          <div class="slot-visual">
+            <div class="slot-icon">🔒</div>
+            <div class="slot-label">Projet client #1</div>
+          </div>
+          <div class="slot-info">
+            <div class="slot-status">En attente</div>
+            <p class="slot-desc">Cette place est réservée à mon premier client. Son projet apparaîtra ici après livraison.</p>
+          </div>
+        </div>
+        <div class="slot-card">
+          <div class="slot-visual">
+            <div class="slot-icon">🔒</div>
+            <div class="slot-label">Projet client #2</div>
+          </div>
+          <div class="slot-info">
+            <div class="slot-status">En attente</div>
+            <p class="slot-desc">Cette place est réservée à mon deuxième client. Son projet apparaîtra ici après livraison.</p>
+          </div>
+        </div>
+        <div class="slot-card">
+          <div class="slot-visual">
+            <div class="slot-icon">🔒</div>
+            <div class="slot-label">Projet client #3</div>
+          </div>
+          <div class="slot-info">
+            <div class="slot-status">En attente</div>
+            <p class="slot-desc">Cette place est réservée à mon troisième client. Son projet apparaîtra ici après livraison.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <footer>
+    <button class="footer-logo" onclick="showPage('accueil')">Convers<span>cent</span></button>
+    <span class="footer-copy">© 2025 — Tous droits réservés</span>
+  </footer>
+</div>
+
+<!-- PAGE: CONTACT -->
+<div class="page" id="page-contact">
+  <div class="section-wrap">
+    <div class="section-label">Contact</div>
+    <div class="contact-grid">
+      <div>
+        <h2 class="contact-heading">Parlons de votre <span>projet.</span></h2>
+        <p class="contact-body">Vous avez un projet en tête ? Une problématique à résoudre ? Je suis disponible pour en discuter et vous proposer la solution chatbot adaptée à vos besoins. Premier échange offert, sans engagement.</p>
+        <div class="contact-links">
+          <a href="#" onclick="window.open('mai'+'lto:'+'converscent'+'@'+'gmail.com');return false;" class="contact-link">
+            <span class="ci">✉️</span><span class="ct">converscent&#64;gmail.com</span><span class="ca">→</span>
+          </a>
+          <a href="https://linkedin.com" target="_blank" class="contact-link">
+            <span class="ci">💼</span><span class="ct">LinkedIn</span><span class="ca">→</span>
+          </a>
+          <a href="https://instagram.com" target="_blank" class="contact-link">
+            <span class="ci">📸</span><span class="ct">Instagram</span><span class="ca">→</span>
+          </a>
+        </div>
+      </div>
+      <div>
+        <form class="contact-form" onsubmit="handleSubmit(event)" novalidate>
+
+          <!-- Nom entreprise + Email -->
+          <div class="form-row">
+            <div class="form-group">
+              <label>Nom d'entreprise</label>
+              <input type="text" id="cf-entreprise" name="entreprise" placeholder="Mon Entreprise" required />
+            </div>
+            <div class="form-group">
+              <label>Email</label>
+              <input type="email" id="cf-email" name="email" placeholder="vous@exemple.fr" required oninput="validateEmail(this)" />
+              <span class="email-error" id="email-error"></span>
+            </div>
+          </div>
+
+          <!-- Choix du chatbot -->
+          <div class="form-group">
+            <label>Chatbot souhaité</label>
+            <select id="choice-bot" name="chatbot">
+              <option value="faq">💬 FAQ</option>
+              <option value="rdv">📅 Réservation</option>
+              <option value="combo">🤖 FAQ + Réservation</option>
+            </select>
+          </div>
+
+          <!-- Choix du pack -->
+          <div class="form-group">
+            <label>Pack souhaité</label>
+            <select id="choice-pack" name="pack">
+              <option value="starter">🚀 Starter — Paiement unique</option>
+              <option value="premium">⭐ Premium — Formule complète</option>
+            </select>
+          </div>
+
+          <!-- Description -->
+          <div class="form-group">
+            <label>Décrivez votre projet</label>
+            <textarea id="cf-desc" name="description" placeholder="En quelques lignes, parlez-nous de votre activité et de ce que vous attendez du chatbot..."></textarea>
+          </div>
+
+          <button type="submit" class="btn-submit">Envoyer le message →</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  <footer>
+    <button class="footer-logo" onclick="showPage('accueil')">Convers<span>cent</span></button>
+    <span class="footer-copy">© 2025 — Tous droits réservés</span>
+  </footer>
+</div>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+  // Cursor
+  const cur=document.getElementById('cursor'),ring=document.getElementById('cursorRing');
+  let mx=0,my=0,rx=0,ry=0;
+  document.addEventListener('mousemove',e=>{
+    mx=e.clientX;my=e.clientY;
+    cur.style.left=mx-6+'px';cur.style.top=my-6+'px';
+  });
+  (function a(){rx+=(mx-rx-18)*0.12;ry+=(my-ry-18)*0.12;ring.style.left=rx+'px';ring.style.top=ry+'px';requestAnimationFrame(a);})();
+  document.querySelectorAll('a,button').forEach(el=>{
+    el.addEventListener('mouseenter',()=>{cur.style.transform='scale(2.5)';ring.style.transform='scale(1.5)';});
+    el.addEventListener('mouseleave',()=>{cur.style.transform='scale(1)';ring.style.transform='scale(1)';});
+  });
+
+  // Demo chatbot
+  const demoReplies = {
+    "tarifs": "Voici nos tarifs de base :\n• Chatbot FAQ — 199 €\n• Chatbot Réservation — 399 €\n• Chatbot FAQ + Réservation — 549 €\nChaque chatbot est disponible en Pack Starter (paiement unique) ou Pack Premium (+ abonnement mensuel avec maintenance incluse).",
+    "starter": "Le Pack Starter inclut la création de votre chatbot + 6 mois de maintenance technique. Les modifications après livraison sont facturées séparément, et les coûts API sont à votre charge.",
+    "premium": "Le Pack Premium inclut le coût de création (identique au Starter) + un abonnement mensuel couvrant la maintenance et les modifications illimitées. Je gère aussi vos clés API.",
+    "différence": "La différence principale : le Starter est un paiement unique avec 6 mois de maintenance, tandis que le Premium est un abonnement mensuel qui inclut maintenance ET modifications continues.",
+    "convient": "Tout dépend de votre activité ! Si vous avez principalement des questions récurrentes de clients, le Chatbot FAQ est idéal. Si vous prenez des rendez-vous, optez pour le Chatbot Réservation. Les deux ? Le pack combiné est fait pour vous !",
+    "contact": "Vous pouvez nous contacter via la page Contact du site pour discuter de votre projet. Le premier échange est offert et sans engagement !",
+    "default": "Bonne question ! Pour une réponse précise, je vous invite à contacter directement via la page Contact. Le premier échange est gratuit et sans engagement. 😊"
+  };
+
+  function getBotReply(msg) {
+    const m = msg.toLowerCase();
+    if (m.includes("tarif") || m.includes("prix") || m.includes("coût") || m.includes("combien")) return demoReplies["tarifs"];
+    if (m.includes("starter")) return demoReplies["starter"];
+    if (m.includes("premium")) return demoReplies["premium"];
+    if (m.includes("différence") || m.includes("difference")) return demoReplies["différence"];
+    if (m.includes("convient") || m.includes("choisir") || m.includes("quel")) return demoReplies["convient"];
+    if (m.includes("contact") || m.includes("joindre") || m.includes("parler")) return demoReplies["contact"];
+    return demoReplies["default"];
+  }
+
+  function appendMsg(text, type) {
+    const chat = document.getElementById('demoChat');
+    const div = document.createElement('div');
+    div.className = 'demo-msg ' + type;
+    div.innerHTML = type === 'bot'
+      ? `<div class="demo-avatar">🤖</div><div class="demo-bubble">${text.replace(/\n/g,'<br>')}</div>`
+      : `<div class="demo-avatar">👤</div><div class="demo-bubble">${text}</div>`;
+    // Remove suggestions on first user message
+    const sugg = chat.querySelector('.demo-suggestions');
+    if (sugg && type === 'user') sugg.remove();
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+  }
+
+  function sendDemo() {
+    const input = document.getElementById('demoInput');
+    const msg = input.value.trim();
+    if (!msg) return;
+    input.value = '';
+    appendMsg(msg, 'user');
+    setTimeout(() => appendMsg(getBotReply(msg), 'bot'), 600);
+  }
+
+  function sendSuggest(btn) {
+    const msg = btn.textContent;
+    btn.closest('.demo-suggestions').remove();
+    appendMsg(msg, 'user');
+    setTimeout(() => appendMsg(getBotReply(msg), 'bot'), 600);
+  }
+
+  // Bouton "Demander un devis" — pré-remplit le formulaire contact
+  function demanderDevis(bot, pack) {
+    showPage('contact', false);
+    setTimeout(() => {
+      const botSelect  = document.getElementById('choice-bot');
+      const packSelect = document.getElementById('choice-pack');
+      if (botSelect)  botSelect.value  = bot;
+      if (packSelect) packSelect.value = pack;
+      const form = document.querySelector('.contact-form');
+      if (form) form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  }
+
+  // Tab navigation
+  function showPage(name, scroll = true){
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.getElementById('page-'+name).classList.add('active');
+    document.querySelector('[data-page="'+name+'"]').classList.add('active');
+    if (scroll) window.scrollTo({top:0,behavior:'smooth'});
+  }
+
+  // Portfolio filter
+  document.querySelectorAll('.filter-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+
+  // Toggle Starter / Premium par carte
+  function switchCardPack(cardId, pack, btn) {
+    // Désactiver les boutons de cette carte uniquement
+    btn.parentElement.querySelectorAll('.card-pack-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    // Afficher le bon bloc prix
+    document.getElementById('price-' + cardId + '-starter').classList.toggle('hidden', pack !== 'starter');
+    document.getElementById('price-' + cardId + '-premium').classList.toggle('hidden', pack !== 'premium');
+  }
+  // Modif form
+  function handleModif(e) {
+    e.preventDefault();
+    const btn = e.target.querySelector('.btn-submit');
+    const data = new FormData(e.target);
+    btn.textContent = '⏳ Envoi en cours...';
+    btn.disabled = true;
+    fetch('https://formspree.io/f/mnjgjydb', { method:'POST', body:data, headers:{'Accept':'application/json'} })
+      .then(r => {
+        if (r.ok) {
+          btn.textContent = '✓ Demande envoyée !';
+          btn.style.background = '#00ffb2'; btn.style.color = '#050810';
+          e.target.reset();
+          setTimeout(() => { btn.textContent = 'Envoyer la demande →'; btn.style.background = ''; btn.style.color = ''; btn.disabled = false; }, 3000);
+        } else {
+          btn.textContent = '✗ Erreur — réessayez'; btn.style.background = '#ff6b6b'; btn.style.color = '#fff';
+          setTimeout(() => { btn.textContent = 'Envoyer la demande →'; btn.style.background = ''; btn.style.color = ''; btn.disabled = false; }, 3000);
+        }
+      })
+      .catch(() => {
+        btn.textContent = '✗ Erreur réseau'; btn.style.background = '#ff6b6b'; btn.style.color = '#fff';
+        setTimeout(() => { btn.textContent = 'Envoyer la demande →'; btn.style.background = ''; btn.style.color = ''; btn.disabled = false; }, 3000);
+      });
+  }
+
+  // Validation email en temps réel
+  function validateEmail(input) {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const err = document.getElementById('email-error');
+    if (input.value === '') {
+      input.classList.remove('invalid','valid');
+      err.textContent = '';
+    } else if (!re.test(input.value)) {
+      input.classList.add('invalid'); input.classList.remove('valid');
+      err.textContent = '⚠ Format invalide — ex : vous@exemple.fr';
+    } else {
+      input.classList.add('valid'); input.classList.remove('invalid');
+      err.textContent = '';
+    }
+  }
+
+  // Form submit
+  function handleSubmit(e){
+    e.preventDefault();
+    const emailInput = document.getElementById('cf-email');
+    if (emailInput) {
+      validateEmail(emailInput);
+      if (emailInput.classList.contains('invalid') || emailInput.value === '') {
+        emailInput.focus(); return;
+      }
+    }
+    const btn = e.target.querySelector('.btn-submit');
+    const data = new FormData(e.target);
+    btn.textContent = '⏳ Envoi en cours...';
+    btn.disabled = true;
+    fetch('https://formspree.io/f/xaqpqzwk', { method:'POST', body:data, headers:{'Accept':'application/json'} })
+      .then(r => {
+        if (r.ok) {
+          btn.textContent = '✓ Message envoyé !';
+          btn.style.background = '#00ffb2'; btn.style.color = '#050810';
+          e.target.reset();
+          if(emailInput) emailInput.classList.remove('valid','invalid');
+          setTimeout(() => { btn.textContent = 'Envoyer le message →'; btn.style.background = ''; btn.style.color = ''; btn.disabled = false; }, 3000);
+        } else {
+          r.json().then(d => console.log('Formspree error:', d));
+          btn.textContent = '✗ Erreur — réessayez'; btn.style.background = '#ff6b6b'; btn.style.color = '#fff';
+          setTimeout(() => { btn.textContent = 'Envoyer le message →'; btn.style.background = ''; btn.style.color = ''; btn.disabled = false; }, 3000);
+        }
+      })
+      .catch(err => {
+        console.log('Fetch error:', err);
+        btn.textContent = '⚠ Hors ligne — site non hébergé'; btn.style.background = '#ff6b6b'; btn.style.color = '#fff';
+        setTimeout(() => { btn.textContent = 'Envoyer le message →'; btn.style.background = ''; btn.style.color = ''; btn.disabled = false; }, 4000);
+      });
+  }
+
+</script>
+</body>
+</html>
